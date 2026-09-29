@@ -1,6 +1,6 @@
-# ZEEKR Owner Care Agent
+# Elyra Owner Care Agent
 
-A demo AI agent for ZEEKR owners, built for deployment on the **WSO2 Agent Platform (Agent Manager)**.
+A demo AI agent for Elyra owners, built for deployment on the **WSO2 Agent Platform (Agent Manager)**.
 "Aria" is the assistant persona. It uses OpenAI tool calling to answer owners' questions and act on their
 behalf, using static demo data.
 
@@ -63,7 +63,7 @@ curl -s localhost:8000/chat -H 'content-type: application/json' \
 | `GET` | `/openapi.json`, `/docs` | OpenAPI spec and Swagger UI |
 
 Conversation history is kept in server memory and keyed by `session_id`. `context.owner_id` is optional. Pass it to
-simulate an owner who is already signed in to the ZEEKR app, so the agent skips the identification step. Bookings,
+simulate an owner who is already signed in to the Elyra app, so the agent skips the identification step. Bookings,
 cases and roadside requests created during a demo are held in memory and reset when the service restarts.
 
 ## Deploy on WSO2 Agent Manager
@@ -95,12 +95,12 @@ environment variables take precedence over it.
 
 | Owner | ID / email | Vehicle | What to show |
 |---|---|---|---|
-| Emma de Vries, Amsterdam | `ZK-OWN-1001` / emma.devries@example.com | ZEEKR 001 and ZEEKR X | Two cars (agent asks which one), annual service booking with a loaner car |
-| Lars Andersson, Stockholm | `ZK-OWN-1002` | ZEEKR 7X | Existing winter-tyre appointment: reschedule or cancel it |
-| Aisha Al Mansoori, Dubai | `ZK-OWN-1003` | ZEEKR 009 | Open infotainment case, cabin filter due, center open Saturday to Thursday |
-| Oliver Chen, Sydney | `ZK-OWN-1004` | ZEEKR 7X | Low rear-left tyre pressure and low charge: roadside assistance |
-| Priya Nair, Singapore | `ZK-OWN-1005` | ZEEKR X | Overdue service, weak 12V battery, pending OTA update |
-| James Wong, Hong Kong | `ZK-OWN-1006` | ZEEKR 007 | Open seatbelt service campaign |
+| Emma de Vries, Amsterdam | `ZK-OWN-1001` / emma.devries@example.com | Elyra 001 and Elyra X | Two cars (agent asks which one), annual service booking with a loaner car |
+| Lars Andersson, Stockholm | `ZK-OWN-1002` | Elyra 7X | Existing winter-tyre appointment: reschedule or cancel it |
+| Aisha Al Mansoori, Dubai | `ZK-OWN-1003` | Elyra 009 | Open infotainment case, cabin filter due, center open Saturday to Thursday |
+| Oliver Chen, Sydney | `ZK-OWN-1004` | Elyra 7X | Low rear-left tyre pressure and low charge: roadside assistance |
+| Priya Nair, Singapore | `ZK-OWN-1005` | Elyra X | Overdue service, weak 12V battery, pending OTA update |
+| James Wong, Hong Kong | `ZK-OWN-1006` | Elyra 007 | Open seatbelt service campaign |
 
 ### Sample script
 

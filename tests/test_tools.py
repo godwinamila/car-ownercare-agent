@@ -104,7 +104,7 @@ def test_dubai_open_on_sunday_closed_friday():
 def test_roadside_and_support_case():
     rsa = tools.request_roadside_assistance("ZK-OWN-1004", "LZKZ7XBDEMO000005", "M4 westbound near Parramatta", "flat_tyre")
     assert rsa["covered"] and rsa["status"] == "Dispatched"
-    case = tools.create_support_case("ZK-OWN-1004", "ZEEKR app", "App login fails", "Can't log in since update.")
+    case = tools.create_support_case("ZK-OWN-1004", "Elyra app", "App login fails", "Can't log in since update.")
     assert case["case_id"] in {c["case_id"] for c in tools.get_support_cases("ZK-OWN-1004")["cases"]}
 
 

@@ -344,7 +344,7 @@ def book_service_appointment(
         "center_name": center["name"],
         "center_address": center["address"],
         "estimated_duration_hours": sum(catalog[c]["duration_hours"] for c in service_codes),
-        "confirmation": "A confirmation has been sent to the owner's email and the ZEEKR app.",
+        "confirmation": "A confirmation has been sent to the owner's email and the Elyra app.",
     }
 
 
@@ -457,7 +457,7 @@ def _schema(properties: Dict[str, Any], required: List[str]) -> Dict[str, Any]:
 TOOL_SCHEMAS: List[Dict[str, Any]] = [
     {
         "name": "identify_owner",
-        "description": "Look up a ZEEKR owner by owner ID, email, phone number, VIN or licence plate. Returns the profile "
+        "description": "Look up a Elyra owner by owner ID, email, phone number, VIN or licence plate. Returns the profile "
         "and registered vehicles. Call this before any other owner-specific tool.",
         "input_schema": _schema({"identifier": {"type": "string", "description": "Owner ID, email, phone, VIN or plate."}}, ["identifier"]),
     },
@@ -490,7 +490,7 @@ TOOL_SCHEMAS: List[Dict[str, Any]] = [
     },
     {
         "name": "find_service_centers",
-        "description": "Search ZEEKR service centers by city, country and/or offered service. All filters are optional.",
+        "description": "Search Elyra service centers by city, country and/or offered service. All filters are optional.",
         "input_schema": _schema(
             {
                 "city": {"type": "string", "description": "City name, e.g. Amsterdam."},
@@ -589,7 +589,7 @@ TOOL_SCHEMAS: List[Dict[str, Any]] = [
                 "vin": {"type": "string", "description": "VIN, if the case relates to a specific vehicle."},
                 "category": {
                     "type": "string",
-                    "enum": ["Vehicle fault", "Infotainment", "ZEEKR app", "Charging", "Billing", "Complaint", "Feedback", "Other"],
+                    "enum": ["Vehicle fault", "Infotainment", "Elyra app", "Charging", "Billing", "Complaint", "Feedback", "Other"],
                 },
                 "subject": {"type": "string", "description": "One-line summary."},
                 "description": {"type": "string", "description": "Full details in the owner's words."},
@@ -604,7 +604,7 @@ TOOL_SCHEMAS: List[Dict[str, Any]] = [
     },
     {
         "name": "search_knowledge_base",
-        "description": "Search ZEEKR owner help articles on charging, range, software updates, warranty, roadside "
+        "description": "Search Elyra owner help articles on charging, range, software updates, warranty, roadside "
         "assistance, tyres, digital key and maintenance. Use for general how-to questions.",
         "input_schema": _schema({"query": {"type": "string", "description": "The owner's question or keywords."}}, ["query"]),
     },

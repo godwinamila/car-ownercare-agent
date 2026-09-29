@@ -1,4 +1,4 @@
-"""ZEEKR Owner Care agent: OpenAI tool-calling loop plus a FastAPI chat service.
+"""Elyra Owner Care agent: OpenAI tool-calling loop plus a FastAPI chat service.
 
 Endpoints (the WSO2 Agent Manager chat-agent contract):
   POST /chat    {"message": str, "session_id": str, "context": {...}} -> {"response": str, "session_id": str}
@@ -72,7 +72,7 @@ def _first_turn_preamble(context: Optional[Dict[str, Any]]) -> str:
     # Kept out of the system prompt so the system prompt stays identical across sessions.
     lines = [f"[Session info] Today's date is {today().strftime('%A %d %B %Y')} ({today().isoformat()})."]
     if context and context.get("owner_id"):
-        lines.append(f"[Session info] The owner is signed in to the ZEEKR app as verified owner ID {context['owner_id']}.")
+        lines.append(f"[Session info] The owner is signed in to the Elyra app as verified owner ID {context['owner_id']}.")
     if context and context.get("channel"):
         lines.append(f"[Session info] Channel: {context['channel']}.")
     return "\n".join(lines)
@@ -101,7 +101,7 @@ def chat(session_id: str, message: str, context: Optional[Dict[str, Any]] = None
             msg = completion.choices[0].message
 
             if getattr(msg, "refusal", None):
-                reply = "I'm sorry, I can't help with that request. Is there anything else about your ZEEKR I can help with?"
+                reply = "I'm sorry, I can't help with that request. Is there anything else about your Elyra I can help with?"
                 messages.append({"role": "assistant", "content": reply})
                 break
 
@@ -133,8 +133,8 @@ def chat(session_id: str, message: str, context: Optional[Dict[str, Any]] = None
 # HTTP service ----------------------------------------------------------------
 
 app = FastAPI(
-    title="ZEEKR Owner Care Agent",
-    description="AI assistant for ZEEKR owners: vehicle status, maintenance, warranty, service bookings, "
+    title="Elyra Owner Care Agent",
+    description="AI assistant for Elyra owners: vehicle status, maintenance, warranty, service bookings, "
     "roadside assistance and support cases. Demo data only.",
     version="1.0.0",
 )
