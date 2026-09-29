@@ -1,13 +1,16 @@
-langgraph>=0.5.0
-langchain-core>=1.0
-langchain-openai>=0.3.35
-openai>=1.40
-python-dotenv>=1.0
-fastapi>=0.110
-uvicorn>=0.29
-pytest>=8.0
+# Exact versions, tested on Python 3.11 together with WSO2 Agent Manager's injected tracing packages
+# (traceloop 0.62.x). Agent Manager puts its own copies of some packages (pydantic, httpx, wrapt, ...) on
+# PYTHONPATH ahead of these, so pydantic and wrapt are pinned to the same versions it ships.
+langgraph==1.2.12
+langchain-core==1.6.6
+langchain-openai==1.6.6
+openai==3.20.0
+fastapi==0.141.1
+uvicorn==0.54.0
+pydantic==2.13.4
+python-dotenv==1.2.3
+pytest==9.1.1
 
-# Keep wrapt on 1.x: WSO2 Agent Manager's auto-instrumentation injects opentelemetry-instrumentation-langchain,
-# which calls wrap_function_wrapper(module=..., name=..., wrapper=...). wrapt 2.x dropped that keyword argument
-# (traceloop/openllmetry#4009). Same pin as the official Agent Manager LangGraph samples.
+# Keep wrapt on 1.x: the injected opentelemetry-instrumentation-langchain calls
+# wrap_function_wrapper(module=..., name=..., wrapper=...), which wrapt 2.x removed (traceloop/openllmetry#4009).
 wrapt==1.17.3
