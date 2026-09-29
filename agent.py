@@ -1,7 +1,7 @@
 """Elyra Owner Care agent: OpenAI tool-calling loop plus a FastAPI chat service.
 
 Endpoints (the WSO2 Agent Manager chat-agent contract):
-  POST /chat    {"message": str, "session_id": str, "context": {...}} -> {"response": str, "session_id": str}
+  POST /chat    {"message": str, "session_id": str, "context": {...}} -> {"response": str}
   GET  /health  liveness and configuration
 """
 
@@ -12,7 +12,6 @@ import logging
 import os
 import threading
 import time
-import uuid
 from typing import Any, Dict, List, Optional
 
 import openai
@@ -143,22 +142,21 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 
 class ChatRequest(BaseModel):
     message: str = Field(..., description="The owner's message.")
-    session_id: Optional[str] = Field(None, description="Conversation ID. Reuse it to continue a conversation.")
+    session_id: str = Field(..., description="Conversation ID. Send the same value on every turn of a conversation.")
     context: Optional[Dict[str, Any]] = Field(
-        None, description="Optional channel context, e.g. {\"owner_id\": \"ZK-OWN-1001\"} for an app-authenticated owner."
+        default_factory=dict,
+        description="Channel context, e.g. {\"owner_id\": \"ZK-OWN-1001\"} for an app-authenticated owner. May be {}.",
     )
 
 
 class ChatResponse(BaseModel):
     response: str
-    session_id: str
 
 
 @app.post("/chat", response_model=ChatResponse)
 def chat_endpoint(req: ChatRequest) -> ChatResponse:
-    session_id = req.session_id or str(uuid.uuid4())
     try:
-        reply = chat(session_id, req.message, req.context)
+        reply = chat(req.session_id, req.message, req.context)
     except openai.AuthenticationError:
         raise HTTPException(status_code=500, detail="LLM authentication failed. Check the OpenAI API key.")
     except openai.RateLimitError:
@@ -169,7 +167,7 @@ def chat_endpoint(req: ChatRequest) -> ChatResponse:
     except openai.APIConnectionError:
         log.exception("Could not reach the LLM endpoint")
         raise HTTPException(status_code=503, detail="Could not reach the LLM service.")
-    return ChatResponse(response=reply, session_id=session_id)
+    return ChatResponse(response=reply)
 
 
 @app.delete("/chat/{session_id}")

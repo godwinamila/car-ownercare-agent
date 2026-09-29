@@ -57,7 +57,7 @@ curl -s localhost:8000/chat -H 'content-type: application/json' \
 
 | Method | Path | Body / response |
 |---|---|---|
-| `POST` | `/chat` | `{"message": "...", "session_id": "...", "context": {"owner_id": "ZK-OWN-1001"}}` returns `{"response": "...", "session_id": "..."}` |
+| `POST` | `/chat` | Request `{"message": "...", "session_id": "...", "context": {"owner_id": "ZK-OWN-1001"}}`, response `{"response": "..."}`. `message` and `session_id` are required; `context` may be `{}` |
 | `DELETE` | `/chat/{session_id}` | Clears a conversation |
 | `GET` | `/health` | Liveness, model and whether an API key is configured |
 | `GET` | `/openapi.json`, `/docs` | OpenAPI spec and Swagger UI |
