@@ -24,7 +24,7 @@ Every vehicle tool checks that the VIN belongs to the identified owner, so one o
 ## Project layout
 
 ```
-main.py                  Entry point: starts the HTTP service on $PORT (default 8000)
+main.py                  Entry point: starts the HTTP service on port 8000
 agent.py                 FastAPI app (/chat, /health) and the OpenAI tool-calling loop
 tools.py                 Tool implementations and tool schemas
 system_prompt.py         Persona and behaviour rules
@@ -88,7 +88,7 @@ environment variables take precedence over it.
 | `OPENAI_API_KEY_DEFAULT` | none | BYO OpenAI key for direct mode; used ahead of `OPENAI_API_KEY` when `OPENAI_URL` is not set |
 | `OPENAI_URL` | not set | Governed mode: base URL of the Agent Manager AI gateway |
 | `OPENAI_MODEL` | `gpt-4o` | Model |
-| `PORT` | `8000` | HTTP port |
+| `AGENT_PORT` | `8000` | HTTP port. Keep 8000 on Agent Manager; the Chat Agent interface expects it |
 | `DEMO_TODAY` | today's date | Pin the date (`YYYY-MM-DD`) so due dates and slots stay the same across rehearsals |
 
 ## Demo personas

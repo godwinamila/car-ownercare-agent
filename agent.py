@@ -183,7 +183,7 @@ def health_info() -> Dict[str, Any]:
         "model": MODEL,
         "governed": GOVERNED,
         "llm_key_configured": bool(API_KEY),
-        "port": int(os.getenv("PORT", "8000")),
+        "port": int(os.getenv("AGENT_PORT", "8000")),
     }
 
 
