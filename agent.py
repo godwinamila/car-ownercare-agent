@@ -191,8 +191,16 @@ class ChatResponse(BaseModel):
 def chat_endpoint(req: ChatRequest) -> ChatResponse:
     try:
         reply = chat(req.session_id, req.message, req.context)
-    except openai.AuthenticationError:
-        raise HTTPException(status_code=500, detail="LLM authentication failed. Check the OpenAI API key.")
+    except openai.AuthenticationError as e:
+        log.error("LLM authentication failed (mode=%s, url=%s): %s", LLM_MODE, PROVIDER_URL or "api.openai.com", e.message)
+        if LLM_MODE == "platform":
+            hint = (f"The Agent Manager LLM gateway at {PROVIDER_URL} rejected the request. Check that the key is sent "
+                    f"in the header the provider expects (currently '{AUTH_HEADER}', set LLM_PROVIDER_AUTH_HEADER to "
+                    "change it) and that the OpenAI key saved in the platform's LLM provider is valid.")
+        else:
+            hint = ("No Agent Manager LLM provider was found, so the agent called OpenAI directly and OpenAI rejected "
+                    "the key. Attach an LLM provider to the agent in the console, or set a valid OPENAI_API_KEY.")
+        raise HTTPException(status_code=500, detail=f"LLM authentication failed ({LLM_MODE} mode). {hint} Upstream: {e.message}")
     except openai.RateLimitError:
         raise HTTPException(status_code=429, detail="The assistant is busy. Please try again shortly.")
     except openai.APIStatusError as e:
