@@ -1,4 +1,4 @@
-"""Elyra Owner Care agent: OpenAI tool-calling loop plus a FastAPI chat service.
+"""Elyra Owner Care agent: a LangGraph tool-calling agent plus a FastAPI chat service.
 
 Endpoints (the WSO2 Agent Manager chat-agent contract):
   POST /chat    {"message": str, "session_id": str, "context": {...}} -> {"response": str}
@@ -7,18 +7,22 @@ Endpoints (the WSO2 Agent Manager chat-agent contract):
 
 from __future__ import annotations
 
-import json
 import logging
 import os
 import re
 import threading
-import time
 from typing import Any, Dict, List, Optional, Tuple
 
 import openai
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from langchain_core.messages import AIMessage, HumanMessage
+from langchain_core.tools import StructuredTool, ToolException
+from langchain_openai import ChatOpenAI
+from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.errors import GraphRecursionError
+from langgraph.prebuilt import create_react_agent
 from pydantic import BaseModel, Field
 
 load_dotenv()  # picks up a local .env file if present; real environment variables take precedence
@@ -30,7 +34,6 @@ log = logging.getLogger("owner_care_agent")
 
 MODEL = os.getenv("OPENAI_MODEL", "gpt-4o")
 MAX_TOOL_ROUNDS = int(os.getenv("MAX_TOOL_ROUNDS", "12"))
-SESSION_TTL_SECONDS = int(os.getenv("SESSION_TTL_SECONDS", "3600"))
 
 
 def _platform_llm_provider() -> Tuple[Optional[str], Optional[str], str]:
@@ -75,41 +78,51 @@ if LLM_MODE == "direct" and os.getenv("OPENAI_API_KEY", "").strip() and not os.g
 AUTH_HEADER = os.getenv("LLM_PROVIDER_AUTH_HEADER", "API-Key")  # set on the provider's Security tab in the console
 
 if LLM_MODE == "platform":
-    client = openai.OpenAI(
+    API_KEY = PROVIDER_KEY
+    llm = ChatOpenAI(
+        model=MODEL,
         base_url=PROVIDER_URL,
         api_key="not-used",
         default_headers={AUTH_HEADER: PROVIDER_KEY or "", "Authorization": ""},
     )
-    API_KEY = PROVIDER_KEY
 else:
     API_KEY = os.getenv("OPENAI_API_KEY")
-    client = openai.OpenAI(api_key=API_KEY or "missing")
-
-OPENAI_TOOLS = [
-    {"type": "function", "function": {"name": t["name"], "description": t["description"], "parameters": t["input_schema"]}}
-    for t in TOOL_SCHEMAS
-]
+    llm = ChatOpenAI(model=MODEL, api_key=API_KEY or "missing")
 
 
-class Session:
-    def __init__(self) -> None:
-        self.messages: List[Dict[str, Any]] = []
-        self.lock = threading.Lock()
-        self.last_used = time.time()
+def _make_tool(schema: Dict[str, Any]) -> StructuredTool:
+    """Wrap one Owner Care tool from tools.py as a LangChain tool, reusing its JSON schema."""
+    name = schema["name"]
+
+    def run(**kwargs: Any) -> str:
+        result, is_error = execute_tool(name, kwargs)
+        log.info("tool %s(%s) -> %s%s", name, kwargs, "ERROR " if is_error else "", result[:300])
+        if is_error:
+            raise ToolException(result)  # returned to the model as an error tool message
+        return result
+
+    return StructuredTool.from_function(
+        func=run,
+        name=name,
+        description=schema["description"],
+        args_schema=schema["input_schema"],
+        handle_tool_error=True,
+    )
 
 
-_sessions: Dict[str, Session] = {}
-_sessions_lock = threading.Lock()
+TOOLS = [_make_tool(t) for t in TOOL_SCHEMAS]
+
+# Conversation state lives in the checkpointer, keyed by thread_id = the chat session_id.
+checkpointer = InMemorySaver()
+graph = create_react_agent(model=llm, tools=TOOLS, prompt=SYSTEM_PROMPT, checkpointer=checkpointer)
+
+_session_locks: Dict[str, threading.Lock] = {}
+_session_locks_guard = threading.Lock()
 
 
-def _get_session(session_id: str) -> Session:
-    now = time.time()
-    with _sessions_lock:
-        for sid in [s for s, sess in _sessions.items() if now - sess.last_used > SESSION_TTL_SECONDS]:
-            del _sessions[sid]
-        session = _sessions.setdefault(session_id, Session())
-        session.last_used = now
-        return session
+def _session_lock(session_id: str) -> threading.Lock:
+    with _session_locks_guard:
+        return _session_locks.setdefault(session_id, threading.Lock())
 
 
 def _first_turn_preamble(context: Optional[Dict[str, Any]]) -> str:
@@ -122,56 +135,20 @@ def _first_turn_preamble(context: Optional[Dict[str, Any]]) -> str:
     return "\n".join(lines)
 
 
-def _run_tool_call(call) -> str:
-    try:
-        args = json.loads(call.function.arguments or "{}")
-    except json.JSONDecodeError as e:
-        return json.dumps({"error": f"Arguments were not valid JSON: {e}"})
-    result, is_error = execute_tool(call.function.name, args)
-    log.info("tool %s(%s) -> %s%s", call.function.name, json.dumps(args), "ERROR " if is_error else "", result[:300])
-    return result
-
-
 def chat(session_id: str, message: str, context: Optional[Dict[str, Any]] = None) -> str:
-    session = _get_session(session_id)
-    with session.lock:
-        # Work on a copy and commit only on success, so a failed API call can't leave unanswered tool calls.
-        messages = list(session.messages) or [{"role": "system", "content": SYSTEM_PROMPT}]
-        user_text = message if len(messages) > 1 else f"{_first_turn_preamble(context)}\n\n{message}"
-        messages.append({"role": "user", "content": user_text})
+    config = {"configurable": {"thread_id": session_id}, "recursion_limit": 2 * MAX_TOOL_ROUNDS + 1}
+    with _session_lock(session_id):
+        is_new = not graph.get_state(config).values.get("messages")
+        text = f"{_first_turn_preamble(context)}\n\n{message}" if is_new else message
+        try:
+            result = graph.invoke({"messages": [HumanMessage(content=text)]}, config=config)
+        except GraphRecursionError:
+            return "Sorry, that took longer than expected. Could you rephrase or break the request into smaller steps?"
 
-        for _ in range(MAX_TOOL_ROUNDS):
-            completion = client.chat.completions.create(model=MODEL, messages=messages, tools=OPENAI_TOOLS)
-            msg = completion.choices[0].message
-
-            if getattr(msg, "refusal", None):
-                reply = "I'm sorry, I can't help with that request. Is there anything else about your Elyra I can help with?"
-                messages.append({"role": "assistant", "content": reply})
-                break
-
-            if not msg.tool_calls:
-                reply = (msg.content or "").strip() or "Is there anything else I can help you with?"
-                messages.append({"role": "assistant", "content": reply})
-                break
-
-            messages.append(
-                {
-                    "role": "assistant",
-                    "content": msg.content,
-                    "tool_calls": [
-                        {"id": c.id, "type": "function", "function": {"name": c.function.name, "arguments": c.function.arguments}}
-                        for c in msg.tool_calls
-                    ],
-                }
-            )
-            for call in msg.tool_calls:
-                messages.append({"role": "tool", "tool_call_id": call.id, "content": _run_tool_call(call)})
-        else:
-            reply = "Sorry, that took longer than expected. Could you rephrase or break the request into smaller steps?"
-            messages.append({"role": "assistant", "content": reply})
-
-        session.messages = messages
-        return reply
+    for m in reversed(result["messages"]):
+        if isinstance(m, AIMessage) and m.content and not m.tool_calls:
+            return str(m.content).strip()
+    return "Is there anything else I can help you with?"
 
 
 # HTTP service ----------------------------------------------------------------
@@ -225,8 +202,9 @@ def chat_endpoint(req: ChatRequest) -> ChatResponse:
 
 @app.delete("/chat/{session_id}")
 def reset_session(session_id: str) -> Dict[str, Any]:
-    with _sessions_lock:
-        existed = _sessions.pop(session_id, None) is not None
+    config = {"configurable": {"thread_id": session_id}}
+    existed = bool(graph.get_state(config).values.get("messages"))
+    checkpointer.delete_thread(session_id)
     return {"ok": True, "cleared": existed}
 
 
@@ -234,6 +212,7 @@ def health_info() -> Dict[str, Any]:
     return {
         "ok": True,
         "model": MODEL,
+        "framework": "langgraph",
         "llm_mode": LLM_MODE,
         "llm_url": PROVIDER_URL or "https://api.openai.com/v1",
         "llm_url_from": PROVIDER_SOURCE or None,

@@ -1,8 +1,8 @@
 # Elyra Owner Care Agent
 
 A demo AI agent for Elyra owners, built for deployment on the **WSO2 Agent Platform (Agent Manager)**.
-"Aria" is the assistant persona. It uses OpenAI tool calling to answer owners' questions and act on their
-behalf, using static demo data.
+"Aria" is the assistant persona. It is built with **LangGraph** (a ReAct tool-calling agent) and answers owners'
+questions and acts on their behalf, using static demo data.
 
 > All owners, VINs, prices, campaigns and service centers in `data/owner_care_data.json` are fictional demo data.
 
@@ -25,7 +25,7 @@ Every vehicle tool checks that the VIN belongs to the identified owner, so one o
 
 ```
 main.py                  Entry point: starts the HTTP service on port 8000
-agent.py                 FastAPI app (/chat, /health) and the OpenAI tool-calling loop
+agent.py                 FastAPI app (/chat, /health) and the LangGraph agent
 tools.py                 Tool implementations and tool schemas
 system_prompt.py         Persona and behaviour rules
 data/owner_care_data.json  Static demo data: owners, vehicles, service history, centers, campaigns, FAQs
@@ -35,10 +35,10 @@ tests/test_tools.py      Unit tests for the tools (no API key needed)
 
 ## Run locally
 
-Requires Python 3.9+ (the Agent Manager deploy uses 3.11).
+Requires Python 3.10+ for LangGraph (the Agent Manager deploy uses 3.11). On macOS: `brew install python@3.11`.
 
 ```bash
-python -m venv .venv && source .venv/bin/activate
+python3.11 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env                   # then put your OpenAI key in .env
 
@@ -62,7 +62,7 @@ curl -s localhost:8000/chat -H 'content-type: application/json' \
 | `GET` | `/health` | Liveness, model and whether an API key is configured |
 | `GET` | `/openapi.json`, `/docs` | OpenAPI spec and Swagger UI |
 
-Conversation history is kept in server memory and keyed by `session_id`. `context.owner_id` is optional. Pass it to
+Conversation history is kept in LangGraph's in-memory checkpointer, keyed by `session_id` (the thread ID). `context.owner_id` is optional. Pass it to
 simulate an owner who is already signed in to the Elyra app, so the agent skips the identification step. Bookings,
 cases and roadside requests created during a demo are held in memory and reset when the service restarts.
 

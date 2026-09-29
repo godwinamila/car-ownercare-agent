@@ -1,5 +1,13 @@
+langgraph>=0.5.0
+langchain-core>=1.0
+langchain-openai>=0.3.35
 openai>=1.40
 python-dotenv>=1.0
 fastapi>=0.110
 uvicorn>=0.29
 pytest>=8.0
+
+# Keep wrapt on 1.x: WSO2 Agent Manager's auto-instrumentation injects opentelemetry-instrumentation-langchain,
+# which calls wrap_function_wrapper(module=..., name=..., wrapper=...). wrapt 2.x dropped that keyword argument
+# (traceloop/openllmetry#4009). Same pin as the official Agent Manager LangGraph samples.
+wrapt==1.17.3
