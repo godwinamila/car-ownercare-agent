@@ -10,9 +10,10 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import threading
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import openai
 from dotenv import load_dotenv
@@ -31,14 +32,47 @@ MODEL = os.getenv("OPENAI_MODEL", "gpt-4o")
 MAX_TOOL_ROUNDS = int(os.getenv("MAX_TOOL_ROUNDS", "12"))
 SESSION_TTL_SECONDS = int(os.getenv("SESSION_TTL_SECONDS", "3600"))
 
-# Two ways to reach the model, as in the WSO2 Agent Manager samples:
-# - Governed: Agent Manager injects OPENAI_URL and OPENAI_API_KEY so calls go through its AI gateway.
-# - Direct (BYO key): OPENAI_API_KEY_DEFAULT, or OPENAI_API_KEY, straight to OpenAI.
-GATEWAY_URL = os.getenv("OPENAI_URL")
-GOVERNED = bool(GATEWAY_URL)
-API_KEY = os.getenv("OPENAI_API_KEY") if GOVERNED else (os.getenv("OPENAI_API_KEY_DEFAULT") or os.getenv("OPENAI_API_KEY"))
 
-client = openai.OpenAI(api_key=API_KEY or "missing", base_url=GATEWAY_URL or None)
+def _platform_llm_provider() -> Tuple[Optional[str], Optional[str]]:
+    """URL and key of the LLM provider attached to this agent in WSO2 Agent Manager.
+
+    Agent Manager injects a <NAME>_URL / <NAME>_API_KEY pair; by default <NAME> is <AGENT>_1. Rename the
+    pair to LLM_PROVIDER_URL / LLM_PROVIDER_KEY in the console, or leave the defaults and the single
+    non-MCP pair is picked up automatically.
+    """
+    if os.getenv("LLM_PROVIDER_URL"):
+        return os.getenv("LLM_PROVIDER_URL"), os.getenv("LLM_PROVIDER_KEY")
+    pairs = [
+        (name[: -len("_URL")], value)
+        for name, value in os.environ.items()
+        if re.fullmatch(r"[A-Z0-9_]+_\d+_URL", name) and "_MCP_" not in name and os.getenv(name[:-4] + "_API_KEY")
+    ]
+    if len(pairs) == 1:
+        prefix, url = pairs[0]
+        return url, os.getenv(prefix + "_API_KEY")
+    if len(pairs) > 1:
+        log.warning("Several LLM provider variables found %s; set LLM_PROVIDER_URL/LLM_PROVIDER_KEY to choose one.",
+                    [p for p, _ in pairs])
+    return None, None
+
+
+# Preferred: the LLM provider configured in WSO2 Agent Manager. Calls go through the platform's AI gateway,
+# which holds the real provider credentials and applies its policies. The agent only has a platform-issued key.
+# Fallback for local development: an OpenAI key of your own (OPENAI_API_KEY).
+PROVIDER_URL, PROVIDER_KEY = _platform_llm_provider()
+LLM_MODE = "platform" if PROVIDER_URL else "direct"
+AUTH_HEADER = os.getenv("LLM_PROVIDER_AUTH_HEADER", "API-Key")  # set on the provider's Security tab in the console
+
+if LLM_MODE == "platform":
+    client = openai.OpenAI(
+        base_url=PROVIDER_URL,
+        api_key="not-used",
+        default_headers={AUTH_HEADER: PROVIDER_KEY or "", "Authorization": ""},
+    )
+    API_KEY = PROVIDER_KEY
+else:
+    API_KEY = os.getenv("OPENAI_API_KEY")
+    client = openai.OpenAI(api_key=API_KEY or "missing")
 
 OPENAI_TOOLS = [
     {"type": "function", "function": {"name": t["name"], "description": t["description"], "parameters": t["input_schema"]}}
@@ -181,7 +215,7 @@ def health_info() -> Dict[str, Any]:
     return {
         "ok": True,
         "model": MODEL,
-        "governed": GOVERNED,
+        "llm_mode": LLM_MODE,
         "llm_key_configured": bool(API_KEY),
         "port": int(os.getenv("AGENT_PORT", "8000")),
     }

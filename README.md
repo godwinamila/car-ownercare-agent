@@ -75,7 +75,23 @@ cases and roadside requests created during a demo are held in memory and reset w
 | Language / version | Python 3.11 |
 | Start command | `python main.py` |
 | Agent interface | Chat agent: `POST /chat`, port `8000` |
-| Environment | Direct mode: `OPENAI_API_KEY_DEFAULT` (secret) and `OPENAI_MODEL=gpt-4o`. Governed mode: Agent Manager provides `OPENAI_URL` and `OPENAI_API_KEY` |
+| LLM provider | Attach an LLM provider to the agent in the console. No OpenAI key is needed in the agent (see below) |
+
+### LLM provider
+
+On Agent Manager the agent uses the **LLM provider configured in the platform**, not a key of its own. Calls go
+through the platform's AI gateway, which holds the real provider credentials and applies its policies and
+guardrails. The agent only receives a gateway URL and a platform-issued key.
+
+1. Configure an OpenAI-compatible LLM provider in Agent Manager (a model such as `gpt-4o`).
+2. Attach it to this agent. The platform injects `<AGENT>_1_URL` and `<AGENT>_1_API_KEY`.
+3. Deploy. `GET /health` should show `"llm_mode": "platform"`.
+
+The agent finds that variable pair automatically. If you attach more than one LLM provider, rename the one to use
+to `LLM_PROVIDER_URL` / `LLM_PROVIDER_KEY` in the console. The key is sent in the `API-Key` header (the
+platform default). If the provider's Security settings use a different header name, set
+`LLM_PROVIDER_AUTH_HEADER` to match. Remove any `OPENAI_API_KEY` or `OPENAI_API_KEY_DEFAULT` from the agent's
+environment variables on the platform.
 
 ### Configuration
 
@@ -84,10 +100,11 @@ environment variables take precedence over it.
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `OPENAI_API_KEY` | none | OpenAI key (direct mode), or the gateway key when `OPENAI_URL` is set |
-| `OPENAI_API_KEY_DEFAULT` | none | BYO OpenAI key for direct mode; used ahead of `OPENAI_API_KEY` when `OPENAI_URL` is not set |
-| `OPENAI_URL` | not set | Governed mode: base URL of the Agent Manager AI gateway |
-| `OPENAI_MODEL` | `gpt-4o` | Model |
+| `<AGENT>_1_URL`, `<AGENT>_1_API_KEY` | injected by Agent Manager | Gateway URL and key of the attached LLM provider |
+| `LLM_PROVIDER_URL`, `LLM_PROVIDER_KEY` | not set | Use these names to choose a provider explicitly |
+| `LLM_PROVIDER_AUTH_HEADER` | `API-Key` | Header that carries the platform key |
+| `OPENAI_API_KEY` | not set | Local development only: your own OpenAI key, used when no platform provider is present |
+| `OPENAI_MODEL` | `gpt-4o` | Model name sent with each request |
 | `AGENT_PORT` | `8000` | HTTP port. Keep 8000 on Agent Manager; the Chat Agent interface expects it |
 | `DEMO_TODAY` | today's date | Pin the date (`YYYY-MM-DD`) so due dates and slots stay the same across rehearsals |
 
