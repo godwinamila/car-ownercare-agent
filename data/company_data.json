@@ -1,0 +1,188 @@
+{
+  "_note": "Fictional demo data for the Elyra customer assistant. Elyra, its models, specifications, prices, phone numbers, addresses and campaigns are invented and do not describe any real company or product.",
+
+  "company": {
+    "name": "Elyra",
+    "tagline": "Electric, elegantly engineered.",
+    "description": "Elyra is a premium electric vehicle brand offering shooting brakes, sedans, SUVs and a luxury MPV. Every Elyra is fully electric, connected, and updated over the air.",
+    "founded": 2021,
+    "headquarters": "Amsterdam, Netherlands",
+    "markets": ["Netherlands", "Sweden", "United Arab Emirates", "Australia", "Singapore", "Hong Kong"],
+    "website": "https://www.elyra.example",
+    "app": "Elyra app (iOS and Android): remote climate, charging control, digital key, service booking, software updates.",
+    "sustainability": "Elyra vehicles are built with recycled aluminium and bio-based interior materials, and Elyra takes back high-voltage batteries at end of life for second-life use or recycling.",
+    "customer_programs": [
+      "Elyra Club: owner membership with Silver, Gold and Platinum tiers, events and service perks",
+      "Elyra Care: prepaid service plans for 3 or 5 years",
+      "Elyra Charge: home charger supply and installation, and a public charging card"
+    ]
+  },
+
+  "models": [
+    {
+      "model": "Elyra 001",
+      "body_type": "Shooting brake",
+      "seats": 5,
+      "drive": ["RWD", "AWD"],
+      "battery_kwh": [100],
+      "range_wltp_km": {"RWD": 620, "AWD": 580},
+      "power_kw": {"RWD": 310, "AWD": 580},
+      "acceleration_0_100_s": {"RWD": 5.9, "AWD": 3.8},
+      "max_dc_charge_kw": 200,
+      "max_ac_charge_kw": 22,
+      "dc_10_80_minutes": 28,
+      "boot_litres": 539,
+      "towing_kg": 1600,
+      "starting_price_eur": 64900,
+      "highlights": ["Frameless doors", "Air suspension on AWD", "Panoramic glass roof"]
+    },
+    {
+      "model": "Elyra 007",
+      "body_type": "Sedan",
+      "seats": 5,
+      "drive": ["RWD", "AWD"],
+      "battery_kwh": [75, 100],
+      "range_wltp_km": {"RWD": 660, "AWD": 590},
+      "power_kw": {"RWD": 310, "AWD": 475},
+      "acceleration_0_100_s": {"RWD": 5.6, "AWD": 2.9},
+      "max_dc_charge_kw": 360,
+      "max_ac_charge_kw": 22,
+      "dc_10_80_minutes": 15,
+      "boot_litres": 462,
+      "towing_kg": 1000,
+      "starting_price_eur": 49900,
+      "highlights": ["800 V architecture", "Lidar-ready driver assistance", "Full-width light bar"]
+    },
+    {
+      "model": "Elyra 7X",
+      "body_type": "Mid-size SUV",
+      "seats": 5,
+      "drive": ["RWD", "AWD"],
+      "battery_kwh": [75, 100],
+      "range_wltp_km": {"RWD": 615, "AWD": 543},
+      "power_kw": {"RWD": 310, "AWD": 475},
+      "acceleration_0_100_s": {"RWD": 6.0, "AWD": 3.8},
+      "max_dc_charge_kw": 420,
+      "max_ac_charge_kw": 22,
+      "dc_10_80_minutes": 13,
+      "boot_litres": 539,
+      "towing_kg": 2000,
+      "starting_price_eur": 52900,
+      "highlights": ["800 V architecture", "Heat pump as standard", "Heated and ventilated rear seats"]
+    },
+    {
+      "model": "Elyra X",
+      "body_type": "Compact SUV",
+      "seats": 5,
+      "drive": ["RWD", "AWD"],
+      "battery_kwh": [66],
+      "range_wltp_km": {"RWD": 446, "AWD": 425},
+      "power_kw": {"RWD": 200, "AWD": 315},
+      "acceleration_0_100_s": {"RWD": 5.6, "AWD": 3.8},
+      "max_dc_charge_kw": 150,
+      "max_ac_charge_kw": 22,
+      "dc_10_80_minutes": 29,
+      "boot_litres": 362,
+      "towing_kg": 1600,
+      "starting_price_eur": 44900,
+      "highlights": ["Compact footprint for city driving", "Frameless doors", "Fridge between the front seats"]
+    },
+    {
+      "model": "Elyra 009",
+      "body_type": "Luxury MPV",
+      "seats": 6,
+      "drive": ["AWD"],
+      "battery_kwh": [116, 140],
+      "range_wltp_km": {"AWD": 822},
+      "power_kw": {"AWD": 400},
+      "acceleration_0_100_s": {"AWD": 4.5},
+      "max_dc_charge_kw": 200,
+      "max_ac_charge_kw": 11,
+      "dc_10_80_minutes": 30,
+      "boot_litres": 700,
+      "towing_kg": 2000,
+      "starting_price_eur": 89900,
+      "highlights": ["Second-row zero-gravity seats", "Rear entertainment screen", "Air suspension"]
+    }
+  ],
+
+  "warranty_policies": {
+    "Europe": {"vehicle_years": 5, "vehicle_km": 100000, "battery_years": 8, "battery_km": 160000, "battery_min_health_pct": 70, "roadside_assistance_years": 5, "paint_years": 3, "corrosion_years": 12},
+    "Middle East": {"vehicle_years": 5, "vehicle_km": 150000, "battery_years": 8, "battery_km": 200000, "battery_min_health_pct": 70, "roadside_assistance_years": 5, "paint_years": 3, "corrosion_years": 12},
+    "Asia Pacific": {"vehicle_years": 5, "vehicle_km": 150000, "battery_years": 8, "battery_km": 160000, "battery_min_health_pct": 70, "roadside_assistance_years": 5, "paint_years": 3, "corrosion_years": 12}
+  },
+  "warranty_exclusions": [
+    "Wear items such as tyres, wiper blades and brake pads",
+    "Damage from accidents, misuse, or unauthorised modifications",
+    "Normal battery capacity loss above the minimum guaranteed health"
+  ],
+
+  "country_region": {
+    "Netherlands": "Europe",
+    "Sweden": "Europe",
+    "United Arab Emirates": "Middle East",
+    "Australia": "Asia Pacific",
+    "Singapore": "Asia Pacific",
+    "Hong Kong": "Asia Pacific"
+  },
+
+  "contact_channels": [
+    {"country": "Netherlands", "customer_care_phone": "+31 20 555 0100", "roadside_phone": "+31 20 555 0199", "email": "care.nl@elyra.example", "hours": "Mon-Fri 08:00-20:00, Sat 09:00-17:00"},
+    {"country": "Sweden", "customer_care_phone": "+46 8 555 0100", "roadside_phone": "+46 8 555 0199", "email": "care.se@elyra.example", "hours": "Mon-Fri 08:00-18:00"},
+    {"country": "United Arab Emirates", "customer_care_phone": "+971 4 555 0100", "roadside_phone": "+971 4 555 0199", "email": "care.ae@elyra.example", "hours": "Sat-Thu 08:00-20:00"},
+    {"country": "Australia", "customer_care_phone": "+61 2 5550 0100", "roadside_phone": "+61 2 5550 0199", "email": "care.au@elyra.example", "hours": "Mon-Fri 08:00-18:00, Sat 09:00-13:00"},
+    {"country": "Singapore", "customer_care_phone": "+65 6555 0100", "roadside_phone": "+65 6555 0199", "email": "care.sg@elyra.example", "hours": "Mon-Sat 08:30-18:30"},
+    {"country": "Hong Kong", "customer_care_phone": "+852 5555 0100", "roadside_phone": "+852 5555 0199", "email": "care.hk@elyra.example", "hours": "Mon-Sat 09:00-18:00"}
+  ],
+
+  "service_centers": [
+    {"center_id": "SC-AMS-01", "name": "Elyra Service Centre Amsterdam", "city": "Amsterdam", "country": "Netherlands", "address": "Demo Straat 1, 1000 AA Amsterdam", "phone": "+31 20 555 0101", "hours": "Mon-Fri 08:00-18:00, Sat 09:00-15:00", "services": ["Scheduled service", "Tyres", "Bodywork", "High-voltage battery", "Software", "Warranty repairs"], "loaner_cars": true, "mobile_service": true},
+    {"center_id": "SC-RTM-01", "name": "Elyra Service Point Rotterdam", "city": "Rotterdam", "country": "Netherlands", "address": "Havenweg 22, 3000 AB Rotterdam", "phone": "+31 10 555 0102", "hours": "Mon-Fri 08:00-17:30", "services": ["Scheduled service", "Tyres", "Software", "Warranty repairs"], "loaner_cars": false, "mobile_service": true},
+    {"center_id": "SC-STO-01", "name": "Elyra Service Centre Stockholm", "city": "Stockholm", "country": "Sweden", "address": "Demovägen 7, 111 22 Stockholm", "phone": "+46 8 555 0103", "hours": "Mon-Fri 07:30-17:00", "services": ["Scheduled service", "Tyres", "Tyre hotel", "High-voltage battery", "Software", "Warranty repairs"], "loaner_cars": true, "mobile_service": true},
+    {"center_id": "SC-DXB-01", "name": "Elyra Service Centre Dubai", "city": "Dubai", "country": "United Arab Emirates", "address": "Sheikh Zayed Road, Al Quoz, Dubai", "phone": "+971 4 555 0104", "hours": "Sat-Thu 08:00-20:00", "services": ["Scheduled service", "A/C service", "Tyres", "Bodywork", "High-voltage battery", "Software", "Warranty repairs"], "loaner_cars": true, "mobile_service": true},
+    {"center_id": "SC-SYD-01", "name": "Elyra Service Centre Sydney", "city": "Sydney", "country": "Australia", "address": "12 Demo Parade, Alexandria NSW 2015", "phone": "+61 2 5550 0105", "hours": "Mon-Fri 08:00-17:30, Sat 08:00-12:00", "services": ["Scheduled service", "Tyres", "Bodywork", "High-voltage battery", "Software", "Warranty repairs"], "loaner_cars": true, "mobile_service": true},
+    {"center_id": "SC-MEL-01", "name": "Elyra Service Point Melbourne", "city": "Melbourne", "country": "Australia", "address": "88 Example St, Richmond VIC 3121", "phone": "+61 3 5550 0106", "hours": "Mon-Fri 08:00-17:00", "services": ["Scheduled service", "Tyres", "Software"], "loaner_cars": false, "mobile_service": true},
+    {"center_id": "SC-SIN-01", "name": "Elyra Service Centre Singapore", "city": "Singapore", "country": "Singapore", "address": "5 Demo Link, Singapore 609000", "phone": "+65 6555 0107", "hours": "Mon-Sat 08:30-18:00", "services": ["Scheduled service", "Tyres", "High-voltage battery", "Software", "Warranty repairs"], "loaner_cars": true, "mobile_service": false},
+    {"center_id": "SC-HKG-01", "name": "Elyra Service Centre Hong Kong", "city": "Hong Kong", "country": "Hong Kong", "address": "18 Demo Road, Kowloon Bay, Hong Kong", "phone": "+852 5555 0108", "hours": "Mon-Sat 09:00-18:00", "services": ["Scheduled service", "Tyres", "Bodywork", "High-voltage battery", "Software", "Warranty repairs"], "loaner_cars": true, "mobile_service": false}
+  ],
+
+  "service_catalog": [
+    {"code": "ANNUAL", "name": "Scheduled service", "duration_hours": 2.5, "indicative_price_eur": 245, "description": "Every 24 months or 30,000 km: multi-point inspection, cabin filter, tyre rotation, brake check, software check."},
+    {"code": "TYRES", "name": "Tyre service", "duration_hours": 1.0, "indicative_price_eur": 89, "description": "Tyre change, rotation, repair, seasonal changeover, alignment."},
+    {"code": "BATTERY_12V", "name": "12V battery replacement", "duration_hours": 0.5, "indicative_price_eur": 180, "description": "Test and replace the 12V auxiliary battery."},
+    {"code": "HV_BATTERY", "name": "High-voltage battery health check", "duration_hours": 1.5, "indicative_price_eur": 0, "description": "Detailed diagnostic of the traction battery and cooling system. Free during the battery warranty."},
+    {"code": "AC", "name": "A/C and heat pump service", "duration_hours": 1.5, "indicative_price_eur": 160, "description": "Refrigerant check, cabin filter, heat pump diagnostics."},
+    {"code": "BODYWORK", "name": "Bodywork and paint assessment", "duration_hours": 1.0, "indicative_price_eur": 0, "description": "Damage assessment and repair quote."}
+  ],
+
+  "software_releases": [
+    {"version": "Elyra OS 6.3.0", "released": "2026-09-01", "models": ["Elyra 001", "Elyra 007", "Elyra 7X", "Elyra X", "Elyra 009"], "notes": ["Faster DC charging preconditioning", "New Pet Mode interface", "Quicker digital key connection", "Improved voice assistant for navigation"], "install_minutes": 35},
+    {"version": "Elyra OS 6.2.1", "released": "2026-06-15", "models": ["Elyra 001", "Elyra 007", "Elyra 7X", "Elyra X", "Elyra 009"], "notes": ["Adaptive cruise control smoothness", "Bug fixes for rear entertainment screen wake-up"], "install_minutes": 30}
+  ],
+
+  "service_campaigns": [
+    {"campaign_id": "SC-2026-007A", "type": "Service campaign", "title": "Rear seatbelt retractor inspection", "models": ["Elyra 007"], "model_years": [2025], "description": "Inspection and, if required, replacement of the rear centre seatbelt retractor on some 2025 Elyra 007 cars. Takes about 1 hour and is free of charge. Affected owners are contacted directly.", "free_of_charge": true},
+    {"campaign_id": "SC-2025-009B", "type": "Service campaign", "title": "Sliding door sensor recalibration", "models": ["Elyra 009"], "model_years": [2024], "description": "Recalibration of the power sliding door obstacle sensor on some 2024 Elyra 009 cars. Takes about 30 minutes and is free of charge.", "free_of_charge": true}
+  ],
+
+  "knowledge_base": [
+    {"id": "KB-01", "topic": "Charging", "question": "How should I charge my Elyra day to day?", "answer": "For daily driving keep the battery between 20% and 80% and use AC charging at home or work. Charge to 100% before long trips. DC fast charging is safe whenever you need it; the car manages battery temperature automatically. Set a charge limit in the Elyra app under Energy > Charging."},
+    {"id": "KB-02", "topic": "Charging", "question": "How do I precondition the battery for fast charging?", "answer": "Set a DC fast charger as your navigation destination and the car warms or cools the battery on the way. You can also start preconditioning manually under Energy > Battery Preconditioning. It can noticeably cut charging time in cold weather."},
+    {"id": "KB-03", "topic": "Charging", "question": "Can Elyra install a home charger?", "answer": "Yes. Elyra Charge supplies and installs 11 kW and 22 kW wall boxes through certified local partners. Order it with your car or later from the Elyra app under Energy > Home Charging. A site survey is included."},
+    {"id": "KB-04", "topic": "Range", "question": "Why is my range lower in winter?", "answer": "Cold temperatures reduce battery efficiency and cabin heating uses energy. Precondition the cabin while plugged in, use seat and steering-wheel heating, and keep tyres at the recommended pressure. A 15-30% drop in winter range is normal."},
+    {"id": "KB-05", "topic": "Software", "question": "How do over-the-air (OTA) updates work?", "answer": "When an update is available you get a notification in the car and the Elyra app. Install it while parked with at least 30% charge; the car can't be driven during installation (about 30-40 minutes). You can schedule it overnight under Settings > Software."},
+    {"id": "KB-06", "topic": "Warranty", "question": "What does the warranty cover?", "answer": "The vehicle warranty covers manufacturing defects in materials and workmanship. The high-voltage battery warranty covers defects and capacity loss below the minimum guaranteed health. Wear items, accident damage and misuse aren't covered. Terms vary by market."},
+    {"id": "KB-07", "topic": "Roadside", "question": "What does roadside assistance include?", "answer": "24/7 help for breakdowns, flat tyres, flat 12V batteries, lockouts and running out of charge, including towing to the nearest Elyra service centre or charger. It's included for the roadside assistance period of the warranty. Call the roadside number for your country or use SOS in the Elyra app."},
+    {"id": "KB-08", "topic": "Tyres", "question": "What tyre pressure should I use?", "answer": "The recommended cold tyre pressures are on the label in the driver's door frame and on the centre display under Vehicle > Tyres. For most Elyra models it is 2.7-3.0 bar. Check pressures monthly and before long trips."},
+    {"id": "KB-09", "topic": "Digital key", "question": "How do I share my digital key?", "answer": "In the Elyra app go to Vehicle > Digital Key > Share, then choose the person, access level and time period. They need the Elyra app and an account. You can revoke access at any time."},
+    {"id": "KB-10", "topic": "Maintenance", "question": "How often does an Elyra need servicing?", "answer": "Every 24 months or 30,000 km, whichever comes first. Cabin air filters may need replacing more often in dusty or polluted areas, and tyre rotation is recommended every 10,000 km. Elyra Care prepaid plans cover scheduled services for 3 or 5 years."},
+    {"id": "KB-11", "topic": "12V battery", "question": "What should I do if the car warns that the 12V battery is low?", "answer": "The 12V battery powers door locks, displays and control systems. Drive the car or keep it plugged in so the high-voltage battery can top it up. If the warning comes back, book a 12V battery check; replacement takes about 30 minutes."},
+    {"id": "KB-12", "topic": "Test drive", "question": "How do I book a test drive?", "answer": "Book a test drive on the Elyra website or in the Elyra app under Discover > Test Drive. Choose a model, a location (showroom or at your home in selected cities) and a time. Test drives last about 45 minutes."},
+    {"id": "KB-13", "topic": "Ordering", "question": "How do I order an Elyra and how long is delivery?", "answer": "Configure and order online or at an Elyra space. A refundable deposit reserves your car. Typical delivery is 6-10 weeks depending on model and market; your order page in the app shows the latest estimate."},
+    {"id": "KB-14", "topic": "Connected services", "question": "What connected services are included?", "answer": "Remote climate, charging control, location, digital key, OTA updates and emergency call are included for the life of the car. Premium connectivity (streaming, in-car Wi-Fi hotspot) is free for the first 3 years, then available as a subscription."},
+    {"id": "KB-15", "topic": "Towing", "question": "Can an Elyra tow a trailer?", "answer": "Yes, when fitted with the factory tow bar. Towing capacity depends on the model, from 1,000 kg (Elyra 007) to 2,000 kg (Elyra 7X and 009). Range drops noticeably when towing; plan charging stops accordingly."},
+    {"id": "KB-16", "topic": "Privacy", "question": "What data does my car share with Elyra?", "answer": "Vehicle health and software data are used to provide services and updates. Location and driving data are only shared with your consent, which you can change at any time in the Elyra app under Settings > Privacy."},
+    {"id": "KB-17", "topic": "Battery care", "question": "How long will the battery last?", "answer": "Elyra batteries are designed to last the life of the car. Capacity loss is typically small and gradual, and the battery warranty guarantees at least 70% health for 8 years. Avoid leaving the car at 100% or below 10% for long periods."},
+    {"id": "KB-18", "topic": "Winter", "question": "Any tips for winter driving?", "answer": "Use winter tyres where required, precondition while plugged in, keep the charge above 20%, and use the Snow drive mode. In Sweden, Elyra service centres offer seasonal tyre changes and a tyre hotel."}
+  ]
+}

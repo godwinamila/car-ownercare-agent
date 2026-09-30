@@ -1,4 +1,4 @@
-"""Elyra Owner Care agent: a LangGraph tool-calling agent plus a FastAPI chat service.
+"""Elyra customer assistant: a LangGraph tool-calling agent plus a FastAPI chat service.
 
 Endpoints (the WSO2 Agent Manager chat-agent contract):
   POST /chat    {"message": str, "session_id": str, "context": {...}} -> {"response": str}
@@ -30,7 +30,7 @@ load_dotenv()  # picks up a local .env file if present; real environment variabl
 from system_prompt import SYSTEM_PROMPT  # noqa: E402
 from tools import TOOL_SCHEMAS, execute_tool, today  # noqa: E402
 
-log = logging.getLogger("owner_care_agent")
+log = logging.getLogger("elyra_assistant")
 
 MODEL = os.getenv("OPENAI_MODEL", "gpt-4o")
 MAX_TOOL_ROUNDS = int(os.getenv("MAX_TOOL_ROUNDS", "12"))
@@ -91,7 +91,7 @@ else:
 
 
 def _make_tool(schema: Dict[str, Any]) -> StructuredTool:
-    """Wrap one Owner Care tool from tools.py as a LangChain tool, reusing its JSON schema."""
+    """Wrap one tool from tools.py as a LangChain tool, reusing its JSON schema."""
     name = schema["name"]
 
     def run(**kwargs: Any) -> str:
@@ -128,8 +128,8 @@ def _session_lock(session_id: str) -> threading.Lock:
 def _first_turn_preamble(context: Optional[Dict[str, Any]]) -> str:
     # Kept out of the system prompt so the system prompt stays identical across sessions.
     lines = [f"[Session info] Today's date is {today().strftime('%A %d %B %Y')} ({today().isoformat()})."]
-    if context and context.get("owner_id"):
-        lines.append(f"[Session info] The owner is signed in to the Elyra app as verified owner ID {context['owner_id']}.")
+    if context and context.get("country"):
+        lines.append(f"[Session info] The customer is browsing from {context['country']}.")
     if context and context.get("channel"):
         lines.append(f"[Session info] Channel: {context['channel']}.")
     return "\n".join(lines)
@@ -154,20 +154,20 @@ def chat(session_id: str, message: str, context: Optional[Dict[str, Any]] = None
 # HTTP service ----------------------------------------------------------------
 
 app = FastAPI(
-    title="Elyra Owner Care Agent",
-    description="AI assistant for Elyra owners: vehicle status, maintenance, warranty, service bookings, "
-    "roadside assistance and support cases. Demo data only.",
+    title="Elyra Customer Assistant",
+    description="AI assistant that answers general questions about Elyra: models and specifications, charging, "
+    "warranty, service network, software updates, service campaigns and contact channels. Demo data only.",
     version="1.0.0",
 )
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 
 class ChatRequest(BaseModel):
-    message: str = Field(..., description="The owner's message.")
+    message: str = Field(..., description="The customer's message.")
     session_id: str = Field(..., description="Conversation ID. Send the same value on every turn of a conversation.")
     context: Optional[Dict[str, Any]] = Field(
         default_factory=dict,
-        description="Channel context, e.g. {\"owner_id\": \"ZK-OWN-1001\"} for an app-authenticated owner. May be {}.",
+        description="Optional context, e.g. {\"country\": \"Netherlands\", \"channel\": \"Website chat\"}. May be {}.",
     )
 
 

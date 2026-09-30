@@ -1,34 +1,36 @@
-# Elyra Owner Care Agent
+# Elyra Customer Assistant
 
-A demo AI agent for Elyra owners, built for deployment on the **WSO2 Agent Platform (Agent Manager)**.
-"Aria" is the assistant persona. It is built with **LangGraph** (a ReAct tool-calling agent) and answers owners'
-questions and acts on their behalf, using static demo data.
+A demo AI agent for the **WSO2 Agent Platform (Agent Manager)**. "Aria" answers general questions about Elyra,
+a fictional premium electric vehicle brand: models and specifications, charging, warranty terms, the service
+network, software updates, service campaigns, contact channels and how-to topics. It's built with **LangGraph**
+(a ReAct tool-calling agent) and uses static demo data.
 
-> All owners, VINs, prices, campaigns and service centers in `data/owner_care_data.json` are fictional demo data.
+It doesn't need to know who the customer is. There's no sign-in, no account or vehicle data, and no bookings.
+Questions about a customer's own car or order get the general policy plus the right contact channel.
+
+> Elyra, its models, specifications, prices, phone numbers, addresses and campaigns in
+> `data/company_data.json` are fictional demo data.
 
 ## What it can do
 
 | Area | Tools |
 |---|---|
-| Identify the owner | `identify_owner` (owner ID, email, phone, VIN or licence plate) |
-| Connected car | `get_vehicle_status`: charge, range, battery health, tyre pressures, 12V battery, software, alerts |
-| Maintenance | `get_service_history`, `get_maintenance_recommendations` |
-| Warranty and recalls | `get_warranty_status`, `check_recalls_and_updates` (campaigns and OTA updates) |
-| Service booking | `find_service_centers`, `get_service_catalog`, `get_available_slots`, `book_service_appointment`, `list_appointments`, `reschedule_appointment`, `cancel_appointment` |
-| Roadside assistance | `request_roadside_assistance` |
-| Support cases | `create_support_case`, `get_support_cases` |
-| Help articles | `search_knowledge_base` |
-
-Every vehicle tool checks that the VIN belongs to the identified owner, so one owner can't read another owner's data.
+| Company | `get_company_info`: about Elyra, markets, the Elyra app, Elyra Club / Care / Charge |
+| Models | `list_models`, `get_model_details`, `compare_models`: specs, range, charging, towing, indicative prices |
+| Warranty | `get_warranty_policy`: terms by country or region, and exclusions |
+| Service network | `find_service_centers`, `get_service_catalog`: locations, services, typical durations and prices |
+| Software and campaigns | `get_software_updates`, `get_service_campaigns` |
+| Contact | `get_contact_channels`: customer care and roadside numbers, email, hours, plus safety-first advice |
+| Help articles | `search_knowledge_base`: charging, home chargers, range, OTA, digital key, test drives, ordering, towing, privacy and more |
 
 ## Project layout
 
 ```
 main.py                  Entry point: starts the HTTP service on port 8000
 agent.py                 FastAPI app (/chat, /health) and the LangGraph agent
-tools.py                 Tool implementations and tool schemas
+tools.py                 Company information tools and their schemas
 system_prompt.py         Persona and behaviour rules
-data/owner_care_data.json  Static demo data: owners, vehicles, service history, centers, campaigns, FAQs
+data/company_data.json   Static demo data
 cli.py                   Chat with the agent in the terminal
 tests/test_tools.py      Unit tests for the tools (no API key needed)
 ```
@@ -44,27 +46,27 @@ cp .env.example .env                   # then put your OpenAI key in .env
 
 python main.py                         # HTTP service on http://localhost:8000
 python cli.py                          # or chat in the terminal
-python cli.py --owner ZK-OWN-1004      # ...as an owner already signed in to the app
+python cli.py --country Netherlands    # ...telling the assistant the customer's country
 pytest -q                              # tool tests
 ```
 
 ```bash
 curl -s localhost:8000/chat -H 'content-type: application/json' \
-  -d '{"message": "Hi, my email is oliver.chen@example.com. Is my car OK?", "session_id": "demo-1"}'
+  -d '{"message": "Which Elyra can tow 2,000 kg?", "session_id": "demo-1", "context": {"country": "Sweden"}}'
 ```
 
 ## API
 
 | Method | Path | Body / response |
 |---|---|---|
-| `POST` | `/chat` | Request `{"message": "...", "session_id": "...", "context": {"owner_id": "ZK-OWN-1001"}}`, response `{"response": "..."}`. `message` and `session_id` are required; `context` may be `{}` |
+| `POST` | `/chat` | Request `{"message": "...", "session_id": "...", "context": {"country": "Netherlands"}}`, response `{"response": "..."}`. `message` and `session_id` are required; `context` may be `{}` |
 | `DELETE` | `/chat/{session_id}` | Clears a conversation |
-| `GET` | `/health` | Liveness, model and whether an API key is configured |
+| `GET` | `/health` | Liveness, model, LLM mode |
 | `GET` | `/openapi.json`, `/docs` | OpenAPI spec and Swagger UI |
 
-Conversation history is kept in LangGraph's in-memory checkpointer, keyed by `session_id` (the thread ID). `context.owner_id` is optional. Pass it to
-simulate an owner who is already signed in to the Elyra app, so the agent skips the identification step. Bookings,
-cases and roadside requests created during a demo are held in memory and reset when the service restarts.
+Conversation history is kept in LangGraph's in-memory checkpointer, keyed by `session_id`. `context` is optional:
+`country` tells the assistant which market the customer is in, and `channel` (for example `Website chat`) is passed
+through as information.
 
 ## Deploy on WSO2 Agent Manager
 
@@ -72,10 +74,11 @@ cases and roadside requests created during a demo are held in memory and reset w
 |---|---|
 | Repository | this repo, branch `main` |
 | App path | `.` |
-| Language / version | Python 3.11 |
+| Language / version | Python, 3.11 |
 | Start command | `python main.py` |
 | Agent interface | Chat agent: `POST /chat`, port `8000` |
 | LLM provider | Attach an LLM provider to the agent in the console. No OpenAI key is needed in the agent (see below) |
+| Resources | CPU limit `1`, memory limit `1Gi` (Deploy, then Edit Resource Configurations). The default 0.1 CPU is too little for LangGraph to start within the platform's startup window, especially when Intel images run emulated on Apple Silicon |
 
 ### LLM provider
 
@@ -106,26 +109,14 @@ environment variables take precedence over it.
 | `OPENAI_API_KEY` | not set | Local development only: your own OpenAI key, used when no platform provider is present |
 | `OPENAI_MODEL` | `gpt-4o` | Model name sent with each request |
 | `AGENT_PORT` | `8000` | HTTP port. Keep 8000 on Agent Manager; the Chat Agent interface expects it |
-| `DEMO_TODAY` | today's date | Pin the date (`YYYY-MM-DD`) so due dates and slots stay the same across rehearsals |
 
-## Demo personas
+## Sample questions
 
-| Owner | ID / email | Vehicle | What to show |
-|---|---|---|---|
-| Emma de Vries, Amsterdam | `ZK-OWN-1001` / emma.devries@example.com | Elyra 001 and Elyra X | Two cars (agent asks which one), annual service booking with a loaner car |
-| Lars Andersson, Stockholm | `ZK-OWN-1002` | Elyra 7X | Existing winter-tyre appointment: reschedule or cancel it |
-| Aisha Al Mansoori, Dubai | `ZK-OWN-1003` | Elyra 009 | Open infotainment case, cabin filter due, center open Saturday to Thursday |
-| Oliver Chen, Sydney | `ZK-OWN-1004` | Elyra 7X | Low rear-left tyre pressure and low charge: roadside assistance |
-| Priya Nair, Singapore | `ZK-OWN-1005` | Elyra X | Overdue service, weak 12V battery, pending OTA update |
-| James Wong, Hong Kong | `ZK-OWN-1006` | Elyra 007 | Open seatbelt service campaign |
-
-### Sample script
-
-1. *"Hi, I'm Priya, my email is priya.nair@example.com. My car showed a battery warning this morning."*
-   The agent finds the weak 12V battery, the overdue service and the pending OTA update.
-2. *"Can you book the service and fix the battery at the same time, sometime next week?"*
-   The agent offers slots, confirms the details, then books.
-3. *"I have a flat tyre on the M4 westbound near Parramatta"* (as Oliver, `cli.py --owner ZK-OWN-1004`).
-   The agent gives safety advice first, then dispatches roadside assistance.
-4. *"Is there anything I need to bring my car in for?"* (as James). The agent finds the open campaign and offers to book it.
-5. *"Show me Emma's car"* (as Lars). The agent refuses to share another owner's data.
+1. *"What models do you have?"*
+2. *"Compare the 007 and the 7X for a family that tows a caravan."* (comparison table; the 7X tows 2,000 kg)
+3. *"What warranty do I get in Sweden?"*
+4. *"How fast does the 7X charge, and can Elyra install a home charger?"*
+5. *"Is there any recall on the Elyra 007?"* (campaign SC-2026-007A for some 2025 cars)
+6. *"Where can I service my car in Australia?"*
+7. *"Can you check my car? My VIN is ..."* (declines politely and points to the app or customer care)
+8. *"I smell burning from under the car on the motorway."* (safety steps first, then the roadside number)

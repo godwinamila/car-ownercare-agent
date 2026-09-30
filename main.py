@@ -1,4 +1,4 @@
-"""Entry point: `python main.py` starts the Owner Care chat service on port 8000 (override with AGENT_PORT)."""
+"""Entry point: `python main.py` starts the Elyra customer assistant chat service on port 8000 (override with AGENT_PORT)."""
 
 import json
 import logging

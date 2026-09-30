@@ -1,116 +1,89 @@
 import json
-import os
 import sys
 from pathlib import Path
 
-os.environ["DEMO_TODAY"] = "2026-09-28"
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-import pytest  # noqa: E402
-
 import tools  # noqa: E402
-from tools import ToolError, execute_tool  # noqa: E402
+from tools import execute_tool  # noqa: E402
 
 
-@pytest.fixture(autouse=True)
-def fresh_store(monkeypatch):
-    monkeypatch.setattr(tools, "store", tools.OwnerCareStore())
+def call(name, **kwargs):
+    result, is_error = execute_tool(name, kwargs)
+    return json.loads(result), is_error
 
 
-def test_identify_owner_by_each_identifier():
-    for ident in ["ZK-OWN-1001", "emma.devries@example.com", "+31 6 5550 1001", "LZKZ00XDEMO000002", "zk-001-nl"]:
-        assert tools.identify_owner(ident)["owner_id"] == "ZK-OWN-1001"
-    with pytest.raises(ToolError):
-        tools.identify_owner("nobody@example.com")
+def test_company_info():
+    info, err = call("get_company_info")
+    assert not err and info["name"] == "Elyra" and "Netherlands" in info["markets"]
 
 
-def test_cannot_access_another_owners_vehicle():
-    result, is_error = execute_tool("get_vehicle_status", {"owner_id": "ZK-OWN-1002", "vin": "LZKZ001DEMO000001"})
-    assert is_error and "not registered" in json.loads(result)["error"]
+def test_list_models():
+    data, _ = call("list_models")
+    assert [m["model"] for m in data["models"]] == ["Elyra 001", "Elyra 007", "Elyra 7X", "Elyra X", "Elyra 009"]
 
 
-def test_maintenance_flags_overdue_service_and_12v_battery():
-    items = {i["item"]: i for i in tools.get_maintenance_recommendations("ZK-OWN-1005", "LZKZ00XDEMO000006")["recommendations"]}
-    assert items["Scheduled service"]["status"] == "Overdue"
-    assert items["12V battery"]["service_code"] == "BATTERY_12V"
+def test_model_lookup_accepts_short_names():
+    for name in ["Elyra 7X", "7x", "7X", "elyra-7x"]:
+        details, err = call("get_model_details", model=name)
+        assert not err and details["model"] == "Elyra 7X"
+    details, _ = call("get_model_details", model="007")
+    assert details["model"] == "Elyra 007"
 
 
-def test_maintenance_flags_low_tyre_pressure():
-    items = {i["item"] for i in tools.get_maintenance_recommendations("ZK-OWN-1004", "LZKZ7XBDEMO000005")["recommendations"]}
-    assert "Tyre pressure" in items
+def test_unknown_model_is_an_error():
+    data, err = call("get_model_details", model="Elyra 500")
+    assert err and "Unknown model" in data["error"]
 
 
-def test_recalls_and_ota():
-    open_ids = {i["campaign_id"] for i in tools.check_recalls_and_updates("ZK-OWN-1006", "LZKZ007DEMO000007")["open_items"]}
-    assert open_ids == {"SC-2026-007A", "OTA-2026-09"}
-    # Already on the latest software, no campaigns.
-    assert tools.check_recalls_and_updates("ZK-OWN-1001", "LZKZ00XDEMO000002")["open_items"] == []
+def test_compare_models():
+    data, err = call("compare_models", models=["007", "7X"])
+    assert not err
+    assert {r["model"] for r in data["comparison"]} == {"Elyra 007", "Elyra 7X"}
+    _, err = call("compare_models", models=["007"])
+    assert err
 
 
-def test_warranty_active():
-    w = tools.get_warranty_status("ZK-OWN-1001", "LZKZ001DEMO000001")
-    assert w["region"] == "Europe"
-    assert w["vehicle_warranty"]["active"] and w["vehicle_warranty"]["expires_on"] == "2029-03-15"
+def test_warranty_by_country_and_all_regions():
+    data, _ = call("get_warranty_policy", country="Sweden")
+    assert data["region"] == "Europe" and data["policy"]["battery_years"] == 8
+    data, _ = call("get_warranty_policy")
+    assert set(data["policies_by_region"]) == {"Europe", "Middle East", "Asia Pacific"}
+    _, err = call("get_warranty_policy", country="Mars")
+    assert err
 
 
-def test_book_reschedule_cancel_flow():
-    slots = tools.get_available_slots("SC-AMS-01", days=10)["availability"]
-    first, second = slots[0], slots[1]
-    result, is_error = execute_tool(
-        "book_service_appointment",
-        {
-            "owner_id": "ZK-OWN-1001",
-            "vin": "LZKZ001DEMO000001",
-            "center_id": "SC-AMS-01",
-            "date": first["date"],
-            "time": first["times"][0],
-            "service_codes": ["ANNUAL", "TYRES"],
-            "loaner_requested": True,
-        },
-    )
-    assert not is_error, result
-    apt = json.loads(result)
-    assert apt["estimated_duration_hours"] == 3.5
-
-    # The booked slot is no longer offered.
-    again = tools.get_available_slots("SC-AMS-01", start_date=first["date"], days=1)["availability"]
-    assert not again or first["times"][0] not in again[0]["times"]
-
-    moved = tools.reschedule_appointment("ZK-OWN-1001", apt["appointment_id"], second["date"], second["times"][0])
-    assert moved["date"] == second["date"]
-    assert tools.cancel_appointment("ZK-OWN-1001", apt["appointment_id"])["status"] == "Cancelled"
+def test_service_centers_filters():
+    data, _ = call("find_service_centers", country="Australia")
+    assert data["count"] == 2
+    data, _ = call("find_service_centers", city="Stockholm", service="tyre hotel")
+    assert data["count"] == 1
 
 
-def test_booking_rejects_unavailable_slot():
-    result, is_error = execute_tool(
-        "book_service_appointment",
-        {
-            "owner_id": "ZK-OWN-1001",
-            "vin": "LZKZ001DEMO000001",
-            "center_id": "SC-AMS-01",
-            "date": "2026-10-04",  # Sunday
-            "time": "09:00",
-            "service_codes": ["ANNUAL"],
-        },
-    )
-    assert is_error
+def test_contact_channels():
+    data, _ = call("get_contact_channels", country="Singapore")
+    assert data["contact_channels"][0]["roadside_phone"]
+    _, err = call("get_contact_channels", country="Atlantis")
+    assert err
 
 
-def test_dubai_open_on_sunday_closed_friday():
-    days = {d["weekday"] for d in tools.get_available_slots("SC-DXB-01", days=14)["availability"]}
-    assert "Friday" not in days and "Sunday" in days
-
-
-def test_roadside_and_support_case():
-    rsa = tools.request_roadside_assistance("ZK-OWN-1004", "LZKZ7XBDEMO000005", "M4 westbound near Parramatta", "flat_tyre")
-    assert rsa["covered"] and rsa["status"] == "Dispatched"
-    case = tools.create_support_case("ZK-OWN-1004", "Elyra app", "App login fails", "Can't log in since update.")
-    assert case["case_id"] in {c["case_id"] for c in tools.get_support_cases("ZK-OWN-1004")["cases"]}
+def test_software_updates_and_campaigns():
+    data, _ = call("get_software_updates")
+    assert data["latest"]["version"] == "Elyra OS 6.3.0"
+    data, _ = call("get_service_campaigns", model="007")
+    assert [c["campaign_id"] for c in data["campaigns"]] == ["SC-2026-007A"]
+    data, _ = call("get_service_campaigns", model="7X")
+    assert data["campaigns"] == []
 
 
 def test_knowledge_base_search():
-    articles = tools.search_knowledge_base("how do I share my digital key")["articles"]
-    assert articles[0]["id"] == "KB-08"
+    data, _ = call("search_knowledge_base", query="how do I book a test drive")
+    assert data["articles"][0]["id"] == "KB-12"
+
+
+def test_no_customer_specific_tools():
+    names = {t["name"] for t in tools.TOOL_SCHEMAS}
+    assert not any(word in n for n in names for word in ("owner", "book_", "cancel", "vehicle_status", "case"))
 
 
 def test_every_schema_has_a_function():
