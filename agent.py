@@ -9,9 +9,8 @@ from __future__ import annotations
 
 import logging
 import os
-import re
 import threading
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import openai
 from dotenv import load_dotenv
@@ -36,45 +35,22 @@ MODEL = os.getenv("OPENAI_MODEL", "gpt-4o")
 MAX_TOOL_ROUNDS = int(os.getenv("MAX_TOOL_ROUNDS", "12"))
 
 
-def _platform_llm_provider() -> Tuple[Optional[str], Optional[str], str]:
-    """URL, key and source of the LLM provider attached to this agent in WSO2 Agent Manager.
+# LLM provider configured in WSO2 Agent Manager. When the provider is attached to the agent, the platform injects
+# its AI gateway URL and a platform-issued key as environment variables, named as shown in the console
+# (e.g. CUSTOMER_ASSISTANT_1_URL). LLM_PROVIDER_URL_VAR / LLM_PROVIDER_KEY_VAR say which variables those are,
+# so the names are configuration, not code.
+LLM_PROVIDER_URL_VAR = os.getenv("LLM_PROVIDER_URL_VAR", "")
+LLM_PROVIDER_KEY_VAR = os.getenv("LLM_PROVIDER_KEY_VAR", "")
 
-    Agent Manager injects a URL / key pair whose names are set in the console when the provider is attached.
-    Checked in order:
-      1. LLM_PROVIDER_URL / LLM_PROVIDER_KEY (explicit names)
-      2. OPENAI_BASE_URL (or OPENAI_URL) / OPENAI_API_KEY
-      3. a single <NAME>_URL / <NAME>_API_KEY pair, e.g. the default <AGENT>_1_URL / <AGENT>_1_API_KEY
-    """
-    if os.getenv("LLM_PROVIDER_URL"):
-        return os.getenv("LLM_PROVIDER_URL"), os.getenv("LLM_PROVIDER_KEY"), "LLM_PROVIDER_URL"
-    for url_var in ("OPENAI_BASE_URL", "OPENAI_URL"):
-        if os.getenv(url_var):
-            return os.getenv(url_var), os.getenv("OPENAI_API_KEY"), url_var
-    pairs = sorted(
-        name[: -len("_URL")]
-        for name in os.environ
-        if name.endswith("_URL") and "_MCP_" not in name and os.getenv(name[: -len("_URL")] + "_API_KEY")
-    )
-    if len(pairs) == 1:
-        return os.getenv(pairs[0] + "_URL"), os.getenv(pairs[0] + "_API_KEY"), pairs[0] + "_URL"
-    if len(pairs) > 1:
-        log.warning("Several LLM provider variables found %s; set LLM_PROVIDER_URL/LLM_PROVIDER_KEY to choose one.", pairs)
-    return None, None, ""
+PROVIDER_URL = os.getenv(LLM_PROVIDER_URL_VAR) if LLM_PROVIDER_URL_VAR else None
+PROVIDER_KEY = os.getenv(LLM_PROVIDER_KEY_VAR) if LLM_PROVIDER_KEY_VAR else None
+if LLM_PROVIDER_URL_VAR and not PROVIDER_URL:
+    log.warning("LLM_PROVIDER_URL_VAR is %s, but that variable is not set; is the LLM provider attached to the agent?",
+                LLM_PROVIDER_URL_VAR)
 
-
-def _llm_env_var_names() -> List[str]:
-    """Names (never values) of variables that look like LLM/MCP settings, to help debug a deployment."""
-    return sorted(n for n in os.environ if re.search(r"(_URL|_API_KEY)$", n))
-
-
-# Preferred: the LLM provider configured in WSO2 Agent Manager. Calls go through the platform's AI gateway,
-# which holds the real provider credentials and applies its policies. The agent only has a platform-issued key.
-# Fallback for local development: an OpenAI key of your own (OPENAI_API_KEY).
-PROVIDER_URL, PROVIDER_KEY, PROVIDER_SOURCE = _platform_llm_provider()
+# "platform": calls go through the Agent Manager AI gateway, which holds the real provider credentials and applies
+# its policies. "direct": no gateway URL was injected (e.g. running on a laptop), so call OpenAI with OPENAI_API_KEY.
 LLM_MODE = "platform" if PROVIDER_URL else "direct"
-if LLM_MODE == "direct" and os.getenv("OPENAI_API_KEY", "").strip() and not os.getenv("OPENAI_API_KEY", "").startswith("sk-"):
-    log.warning("OPENAI_API_KEY does not look like an OpenAI key (it may be a platform gateway key) but no gateway "
-                "URL was found. Variables present: %s", _llm_env_var_names())
 AUTH_HEADER = os.getenv("LLM_PROVIDER_AUTH_HEADER", "API-Key")  # set on the provider's Security tab in the console
 
 if LLM_MODE == "platform":
@@ -215,8 +191,7 @@ def health_info() -> Dict[str, Any]:
         "framework": "langgraph",
         "llm_mode": LLM_MODE,
         "llm_url": PROVIDER_URL or "https://api.openai.com/v1",
-        "llm_url_from": PROVIDER_SOURCE or None,
-        "llm_env_vars": _llm_env_var_names(),
+        "llm_url_from": LLM_PROVIDER_URL_VAR if PROVIDER_URL else "OPENAI_API_KEY (direct)",
         "llm_key_configured": bool(API_KEY),
         "port": int(os.getenv("AGENT_PORT", "8000")),
     }

@@ -87,12 +87,14 @@ through the platform's AI gateway, which holds the real provider credentials and
 guardrails. The agent only receives a gateway URL and a platform-issued key.
 
 1. Configure an OpenAI-compatible LLM provider in Agent Manager (a model such as `gpt-4o`).
-2. Attach it to this agent. The platform injects `<AGENT>_1_URL` and `<AGENT>_1_API_KEY`.
+2. Attach it to this agent. The platform injects `CUSTOMER_ASSISTANT_1_URL` and `CUSTOMER_ASSISTANT_1_API_KEY`.
 3. Deploy. `GET /health` should show `"llm_mode": "platform"`.
 
-The agent finds that variable pair automatically. If you attach more than one LLM provider, rename the one to use
-to `LLM_PROVIDER_URL` / `LLM_PROVIDER_KEY` in the console. The key is sent in the `API-Key` header (the
-platform default). If the provider's Security settings use a different header name, set
+Tell the agent which variables those are by adding two environment variables to the agent in the console:
+`LLM_PROVIDER_URL_VAR=CUSTOMER_ASSISTANT_1_URL` and `LLM_PROVIDER_KEY_VAR=CUSTOMER_ASSISTANT_1_API_KEY`. If you
+rename the injected variables or deploy under another agent name, update these two values; no code change is
+needed. Without them, the agent calls OpenAI directly with `OPENAI_API_KEY`. The key is sent in the
+`API-Key` header (the platform default). If the provider's Security settings use a different header name, set
 `LLM_PROVIDER_AUTH_HEADER` to match. Remove any `OPENAI_API_KEY` or `OPENAI_API_KEY_DEFAULT` from the agent's
 environment variables on the platform.
 
@@ -103,8 +105,8 @@ environment variables take precedence over it.
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `<AGENT>_1_URL`, `<AGENT>_1_API_KEY` | injected by Agent Manager | Gateway URL and key of the attached LLM provider |
-| `LLM_PROVIDER_URL`, `LLM_PROVIDER_KEY` | not set | Use these names to choose a provider explicitly |
+| `CUSTOMER_ASSISTANT_1_URL`, `CUSTOMER_ASSISTANT_1_API_KEY` | injected by Agent Manager | Gateway URL and key of the attached LLM provider |
+| `LLM_PROVIDER_URL_VAR`, `LLM_PROVIDER_KEY_VAR` | not set | **Set these on the platform**: the names of the two injected variables above |
 | `LLM_PROVIDER_AUTH_HEADER` | `API-Key` | Header that carries the platform key |
 | `OPENAI_API_KEY` | not set | Local development only: your own OpenAI key, used when no platform provider is present |
 | `OPENAI_MODEL` | `gpt-4o` | Model name sent with each request |
